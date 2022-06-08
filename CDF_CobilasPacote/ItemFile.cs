@@ -7,9 +7,10 @@ namespace Cobilas.IO.CobilasPackage {
         private byte[] content;
         private bool disposed;
 
-        public string RelativePath => relativePath;
         public byte[] Content => content;
         public bool Disposed => disposed;
+        public string RelativePath => relativePath;
+        public int Count => content == null ? 0 : content.Length;
 
         internal ItemFile(string relativePath, byte[] content) {
             this.relativePath = relativePath;
@@ -19,8 +20,10 @@ namespace Cobilas.IO.CobilasPackage {
         public void Rename(string relativePath)
             => this.relativePath = relativePath;
 
-        public void ChangeContent(byte[] content)
-            => this.content = content;
+        public void ChangeContent(byte[] content) {
+            Array.Clear(this.content, 0, Count);
+            this.content = content;
+        }
 
         public void Dispose() {
             if (disposed) return;

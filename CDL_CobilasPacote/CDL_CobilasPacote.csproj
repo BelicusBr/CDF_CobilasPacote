@@ -43,6 +43,16 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CDLs\cmd_delete.cs" />
+    <Compile Include="CDLs\cmd_focus.cs" />
+    <Compile Include="CDLs\cmd_in.cs" />
+    <Compile Include="CDLs\cmd_init.cs" />
+    <Compile Include="CDLs\cmd_out.cs" />
+    <Compile Include="CDLs\cmd_rename.cs" />
+    <Compile Include="CDLs\cmd_show.cs" />
+    <Compile Include="CDLs\root_help.cs" />
+    <Compile Include="CommandOutput.cs" />
+    <Compile Include="KeyPaths.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

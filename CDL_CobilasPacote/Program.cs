@@ -6,11 +6,72 @@ using System.Runtime.Serialization.Formatters.Binary;
 
 namespace Cobilas.IO.CobilasPackage.CLI {
 
+    /*
+     * help
+     * exit/sair
+     * clear/limpar
+     * cmd
+     * cmd init
+     * cmd init pack : {nome do pack}
+     * cmd init entry : {caminho do arquivo} : {caminho relativo}
+     * cmd focus
+     * cmd focus pack {nome do pack}/{indice}
+     * cmd show
+     * cmd show pack
+     * cmd show packs
+     * cmd show entries
+     * cmd delete
+     * cmd delete pack : {nome do pack}/{indice}
+     * cmd delete entry {caminho relativo}/{indice}
+     * cmd rename
+     * cmd rename pack : {nome do pack} : {novo nome do pack}
+     * cmd rename entry : {caminho relativo} : {novo caminho relativo}
+     * cmd in
+     * cmd in pack : {caminho do arquivo pack}
+     * cmd out
+     * cmd out pack : {nome do pack} : {caminho do arquivo pack}
+     * cmd out entry : {caminho relativo} : {caminho do arquivo de saida}
+     */
+
     class Program {
         private static bool exit = false;
         private static List<CobilasPackage> packs = new List<CobilasPackage>();
         private static CobilasPackage focused;
         private static int focusedIndex;
+        private static KeyPaths RootCommand = new KeyPaths("Root", new KeyPaths[] {
+            new KeyPaths("help", (Action)root_help),
+            new KeyPaths("exit/sair", new Action(() => { exit = true; })),
+            new KeyPaths("clear/limpar", (Action)Console.Clear),
+            new KeyPaths("cmd", new KeyPaths[] {
+                new KeyPaths("init", new KeyPaths[] {
+                    new KeyPaths("pack", (Action<string>)root_cmd_init_pack),
+                    new KeyPaths("entry", (Action<string>)root_cmd_init_entry)
+                }),
+                new KeyPaths("focus", new KeyPaths[] {
+                    new KeyPaths("pack", (Action<string>)root_cmd_focus_pack)
+                }),
+                new KeyPaths("show", new KeyPaths[] {
+                    new KeyPaths("pack", (Action)root_cmd_show_pack),
+                    new KeyPaths("packs", (Action)root_cmd_show_packs),
+                    new KeyPaths("entries", (Action)root_cmd_show_entries)
+                }),
+                new KeyPaths("delete",  new KeyPaths[] {
+                    new KeyPaths("pack", (Action<string>)root_cmd_delete_pack),
+                    new KeyPaths("entry", (Action<string>)root_cmd_delete_entry)
+                }),
+                new KeyPaths("rename",  new KeyPaths[] {
+                    new KeyPaths("pack", (Action<string>)root_cmd_rename_pack),
+                    new KeyPaths("entry", (Action<string>)root_cmd_rename_entry)
+                }),
+                new KeyPaths("in",  new KeyPaths[] {
+                    new KeyPaths("pack", (Action<string>)root_cmd_in_pack)
+                }),
+                new KeyPaths("out",  new KeyPaths[] {
+                    new KeyPaths("pack", (Action<string>)root_cmd_out_pack),
+                    new KeyPaths("entry", (Action<string>)root_cmd_out_entry)
+                })
+            })
+        });
 
         static void Main(string[] args) {
 
@@ -19,51 +80,233 @@ namespace Cobilas.IO.CobilasPackage.CLI {
             Console.Write("Time {0}\n", DateTime.Now.ToLongTimeString());
             Console.WriteLine("help");
 
+            try
+            {
+
             if (args.Length != 0)
                 foreach (var item in args)
-                    GetCommand(item);
+                    CommandLineRunner(CommandLineInterpreter(item));
 
             while (!exit && args.Length == 0)
-                GetCommand(Console.ReadLine());
+                CommandLineRunner(CommandLineInterpreter(Console.ReadLine()));
+            }
+            catch (Exception e)
+            {
+
+                Console.WriteLine(e);
+                Console.ReadLine();
+            }
         }
 
-        private static void CmdHelp() {
+        //================================metodos in/out
+        private static void root_cmd_in_pack(string path) {
+            BinaryFormatter formatter = new BinaryFormatter();
+            using (FileStream stream = File.OpenRead(path.Trim()))
+                packs.Add((CobilasPackage)formatter.Deserialize(stream));
+        }
+
+        private static void root_cmd_out_pack(string arg) {
+            try {
+                string[] itens = arg.Split(':');
+                if (ConteinsPack(itens[0].Trim())) {
+                    BinaryFormatter formatter = new BinaryFormatter();
+                    using (FileStream stream = File.Create(itens[1].Trim()))
+                        formatter.Serialize(stream, packs[IndexOfPack(itens[0].Trim())]);
+                } else Console.WriteLine($"package {itens[0].Trim()} does not exist!");
+            } catch {
+                Console.WriteLine($"argument [{arg}] is invalid!");
+            }
+        }
+
+        private static void root_cmd_out_entry(string arg) {
+            try {
+                if (focused == null) {
+                    Console.WriteLine("no focused pack");
+                    return;
+                }
+                string[] itens = arg.Split(':');
+                if (focused.Contains(itens[0].Trim())) {
+                    BinaryFormatter formatter = new BinaryFormatter();
+                    using (FileStream stream = File.Create(itens[1].Trim()))
+                        formatter.Serialize(stream, focused[itens[0].Trim()]);
+                }
+                else Console.WriteLine($"entry {itens[0].Trim()} does not exist!");
+            }
+            catch
+            {
+                Console.WriteLine($"argument [{arg}] is invalid!");
+            }
+        }
+        //======================================================
+
+        private static void CommandLineRunner(List<CommandOutput> args) {
+            KeyPaths temp = RootCommand;
+            for (int I = 0; I < args.Count; I++) {
+                temp = temp[args[I].Command];
+                if (args[I].FinalCommand) {
+                    if (args[I].IsOutput) temp.action.DynamicInvoke(args[I].Output);
+                    else temp.action.DynamicInvoke(null);
+                }
+            }
+        }
+
+        private static List<CommandOutput> CommandLineInterpreter(string arg) {
+            List<CommandOutput> res = new List<CommandOutput>();
+            string[] comm;
+            string cml;
+            string _value;
+            Split(arg, out cml, out _value);
+            comm = cml.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+
+            for (int I = 0; I < comm.Length; I++)
+                res.Add(new CommandOutput(comm[I].Trim()));
+
+            CommandOutput jut = res[res.Count - 1];
+            jut.FinalCommand = true;
+            jut.IsOutput = _value != null;
+            jut.Output = _value != null ? _value : null;
+            res[res.Count - 1] = jut;
+
+            return res;
+        }
+
+        private static void Split(string arg, out string CML, out string value) {
+            int sharedCommandIndex = arg.IndexOf(':');
+            if (sharedCommandIndex == -1) {
+                CML = arg;
+                value = null;
+            } else {
+                CML = arg.Remove(sharedCommandIndex).Trim();
+                value = arg.Remove(0, sharedCommandIndex + 1).Trim();
+            }
+        }
+
+        private static void root_cmd_focus_pack(string arg) {
+            int res;
+            if (int.TryParse(arg.Trim(), out res)) {
+                if (res > -1 && res < packs.Count) {
+                    focused = packs[res];
+                    focusedIndex = res;
+                } else Console.WriteLine($"the index {res} is outside the bounds of the array");
+            } else {
+                if (!ConteinsPack(arg.Trim())) {
+                    focused = packs[res = IndexOfPack(arg.Trim())];
+                    focusedIndex = res;
+                } else Console.WriteLine($"package {arg.Trim()} does not exist!");
+            }
+        }
+
+        private static void root_cmd_init_pack(string arg) {
+            if (arg.Contains(":")) {
+                Console.WriteLine($"package name {arg} cannot contain \":\"");
+                return;
+            }
+            if (string.IsNullOrEmpty(arg)) {
+                Console.WriteLine("package name cannot be empty");
+                return;
+            }
+            packs.Add(new CobilasPackage(arg.Trim()));
+        }
+
+        private static void root_cmd_init_entry(string arg) {
+            try {
+                if (focused == null) {
+                    Console.WriteLine("no focused pack");
+                    return;
+                }
+                string[] itens = arg.Split(':');
+                if (!focused.Contains(itens[1].Trim()))
+                    focused.Add(itens[1].Trim(), File.ReadAllBytes(itens[0].Trim()));
+                else Console.WriteLine($"input {itens[1].Trim()} already exists!");
+            } catch {
+                Console.WriteLine($"argument [{arg}] is invalid!");
+            }
+        }
+
+        private static void root_cmd_show_pack() {
+            if (focused == null) {
+                Console.WriteLine("no focused pack");
+                return;
+            }
+            Console.WriteLine($"pack name: {focused.Name}");
+            Console.WriteLine($"pack index: {focusedIndex}");
+        }
+
+        private static void root_cmd_show_packs() {
+            if (packs.Count == 0) {
+                Console.WriteLine("empty pack record");
+                return;
+            }
+            for (int I = 0; I < packs.Count; I++)
+                Console.WriteLine($"pack index[{I}] name:{packs[I].Name}");
+        }
+
+        private static void root_cmd_show_entries() {
+            if (focused == null) {
+                Console.WriteLine("no focused pack");
+                return;
+            }
+            for (int I = 0; I < focused.Count; I++)
+                Console.WriteLine($"entry index[{I}] name:{focused[I].RelativePath}");
+        }
+
+        private static void root_cmd_delete_pack(string arg) {
+            int res;
+            if (int.TryParse(arg.Trim(), out res)) {
+                if (res > -1 && res < packs.Count) packs.RemoveAt(res);
+                else Console.WriteLine($"the index {res} is outside the bounds of the array");
+            } else {
+                if (!ConteinsPack(arg.Trim())) packs.RemoveAt(IndexOfPack(arg.Trim()));
+                else Console.WriteLine($"package {arg.Trim()} does not exist!");
+            }
+        }
+
+        private static void root_cmd_delete_entry(string arg) {
+            if (focused == null) {
+                Console.WriteLine("no focused pack");
+                return;
+            }
+            int res;
+            if (int.TryParse(arg.Trim(), out res)) {
+                if (res > -1 && res < focused.Count) focused.Remove(res);
+                else Console.WriteLine($"the index {res} is outside the bounds of the array");
+            } else {
+                if (!focused.Contains(arg.Trim())) focused.Remove(arg.Trim());
+                else Console.WriteLine($"entry {arg.Trim()} does not exist!");
+            }
+        }
+
+        private static void root_cmd_rename_pack(string arg) {
+            try {
+                string[] itens = arg.Split(':');
+                if (ConteinsPack(itens[0].Trim()))
+                    packs[IndexOfPack(itens[0].Trim())].Rename(itens[1].Trim());
+                else Console.WriteLine($"package {itens[0].Trim()} does not exist!");
+            } catch {
+                Console.WriteLine($"argument [{arg}] is invalid!");
+            }
+        }
+
+        private static void root_cmd_rename_entry(string arg) {
+            try {
+                if (focused == null) {
+                    Console.WriteLine("no focused pack");
+                    return;
+                }
+                string[] itens = arg.Split(':');
+                if (focused.Contains(itens[0].Trim()))
+                    focused[itens[0].Trim()].Rename(itens[1].Trim());
+                else Console.WriteLine($"entry {itens[0].Trim()} does not exist!");
+            } catch {
+                Console.WriteLine($"argument [{arg}] is invalid!");
+            }
+        }
+
+        private static void root_help() {
             switch (CultureInfo.CurrentCulture.Name) {
                 case "pt-BR":
-                    HelpWriteLine("cmd", "iniciação de comando");
-                    HelpWriteLine("help", "exibir uma lista de comandos");
-                    HelpWriteLine("exit/sair", "comando de saída do cmd");
-                    HelpWriteLine("clear/limpar", "comando para limpar o cmd");
-                    HelpWriteLine("cmd pack init {nome do pack}", "inicia um novo pack");
-                    HelpWriteLine("cmd pack focused {nome do pack}/{indice}", "focar no pack para ser manípulado");
-                    HelpWriteLine("cmd pack showPacks", "mostrar todos os packs registrados");
-                    HelpWriteLine("cmd pack showFocusedItem", "mostrar o pack que está focado");
-                    HelpWriteLine("cmd pack rename \"{nome do pack}\" to \"{novo nome do pack}\"", "renomeá um pack");
-                    HelpWriteLine("cmd pack delete {nome do pack}/{indice}", "remova um pack registrado");
-                    HelpWriteLine("cmd pack in {caminho do arquivo pack}", "deserializa um arquivo pack");
-                    HelpWriteLine("cmd pack out \"{nome do pack}\" to \"{caminho do arquivo pack}\"", "serializa pack para um arquivo pack");
-                    HelpWriteLine("cmd file init \"{caminho do arquivo}\" to \"{caminho relativo da entrada}\"", "inicia uma nova entrada no pack");
-                    HelpWriteLine("cmd file showFiles", "mostrar todas as entradas no pack que esta focado");
-                    HelpWriteLine("cmd file delete {caminho relativo da entrada}/{indice}", "remover uma entrada do pack");
-                    HelpWriteLine("cmd file rename \"{caminho relativo da entrada}\" to \"{novo caminho relativo da entrada}\"", "renomeá uma entrada");
                     break;
                 case "en-US":
-                    HelpWriteLine("cmd", "command initiation");
-                    HelpWriteLine("help", "display a list of commands");
-                    HelpWriteLine("exit/sair", "cmd output command");
-                    HelpWriteLine("clear/limpar", "command to clean cmd");
-                    HelpWriteLine("cmd pack init {nome do pack}", "start a new pack");
-                    HelpWriteLine("cmd pack focused {nome do pack}/{indice}", "focus on the pack to be manipulated");
-                    HelpWriteLine("cmd pack showPacks", "show all registered packs");
-                    HelpWriteLine("cmd pack showFocusedItem", "show the pack that is focused");
-                    HelpWriteLine("cmd pack rename \"{nome do pack}\" to \"{novo nome do pack}\"", "rename a pack");
-                    HelpWriteLine("cmd pack delete {nome do pack}/{indice}", "remove a registered pack");
-                    HelpWriteLine("cmd pack in {caminho do arquivo pack}", "deserialize a pack file");
-                    HelpWriteLine("cmd pack out \"{nome do pack}\" to \"{caminho do arquivo pack}\"", "serializes pack to a pack file");
-                    HelpWriteLine("cmd file init \"{caminho do arquivo}\" to \"{caminho relativo da entrada}\"", "starts a new entry in the pack");
-                    HelpWriteLine("cmd file showFiles", "show all entries in the pack that is focused");
-                    HelpWriteLine("cmd file delete {caminho relativo da entrada}/{indice}", "remove an entry from the pack");
-                    HelpWriteLine("cmd file rename \"{caminho relativo da entrada}\" to \"{novo caminho relativo da entrada}\"", "rename an entry");
                     break;
                 default:
                     break;
@@ -95,189 +338,61 @@ namespace Cobilas.IO.CobilasPackage.CLI {
             return false;
         }
 
-        private static void CutBetweenTo(string arg, out string arg1, out string arg2) {
-            int doubleQuote = arg.IndexOf('"', 1);
-            int index = arg.IndexOf("to", doubleQuote);
-            arg1 = arg.Remove(index).Trim('"', ' ');
-            arg2 = arg.Remove(0, index);
-            arg2 = arg2.Remove(0, arg2.IndexOf(' ') + 1).Trim('"', ' ');
-        }
+        private struct CommandOutput {
+            public string Command;
+            public string Output;
+            public bool IsOutput;
+            public bool FinalCommand;
 
-        private static void GetCommandType(string arg, out string CommandType, out string newArg) {
-            int index = arg.IndexOf(' ');
-            if (index == -1) {
-                CommandType = arg;
-                newArg = "";
-            } else {
-                CommandType = arg.Remove(index);
-                newArg = arg.Remove(0, index + 1);
+            public CommandOutput(string Command, string Output, bool IsOutput, bool FinalCommand) {
+                this.Command = Command;
+                this.Output = Output;
+                this.IsOutput = IsOutput;
+                this.FinalCommand = FinalCommand;
             }
+
+            public CommandOutput(string Command) :
+                this(Command, null, false, false) { }
         }
 
-        private static void GetCommand(string arg) {
-            string CommandType;
-            string newArg;
-            GetCommandType(arg, out CommandType, out newArg);
-            switch (CommandType) {
-                case "exit":
-                case "sair":
-                    exit = true;
-                    break;
-                case "clear":
-                case "limpar":
-                    Console.Clear();
-                    break;
-                case "help":
-                    CmdHelp();
-                    break;
-                case "cmd":
-                    CmdCommand(newArg);
-                    break;
-                default:
-                    Console.WriteLine($"argument {CommandType} invalid");
-                    break;
+        private struct KeyPaths {
+            public string CommandType;
+            public KeyPaths[] cellars;
+            public Delegate action;
+
+            public KeyPaths this[string CommandType] {
+                get {
+                    if (cellars != null)
+                        foreach (var item in cellars)
+                            if (item.IsKey(CommandType))
+                                return item;
+                    return new KeyPaths();
+                }
             }
-        }
 
-        private static void CmdCommand(string arg) {
-            string CommandType;
-            string newArg;
-            GetCommandType(arg, out CommandType, out newArg);
-            switch (CommandType) {
-                case "pack":
-                    CmdPackCommand(newArg);
-                    break;
-                case "file":
-                    CmdFileCommand(newArg);
-                    break;
-                default:
-                    Console.WriteLine($"argument {CommandType} invalid");
-                    break;
+            public KeyPaths(string CommandType, Delegate action, KeyPaths[] cellars) {
+                this.CommandType = CommandType;
+                this.action = action;
+                this.cellars = cellars;
             }
-        }
 
-        private static void CmdFileCommand(string arg) {
-            string CommandType;
-            string newArg;
-            int res;
-            GetCommandType(arg, out CommandType, out newArg);
-            switch (CommandType) {
-                case "init":
-                    string path;
-                    string relativePath;
-                    CutBetweenTo(newArg, out path, out relativePath);
-                    if (!focused.Contains(relativePath))
-                        focused.Add(relativePath, File.ReadAllBytes(path));
-                    else Console.WriteLine($"{relativePath} exists!");
-                    break;
-                case "showFiles":
-                    for (int I = 0; I < focused.Count; I++)
-                        Console.WriteLine("file N[{0}] name:{1}",I, focused[I].RelativePath);
-                    break;
-                case "delete":
-                    if (int.TryParse(newArg, out res)) {
-                        if (res > -1 && res < packs.Count)
-                            packs.RemoveAt(res);
-                        else
-                            Console.WriteLine($"item at index {res} does not exist!");
-                    } else {
-                        if (ConteinsPack(newArg))
-                            packs.RemoveAt(IndexOfPack(newArg));
-                        else
-                            Console.WriteLine($"item {newArg} does not exist!");
-                    }
-                    break;
-                case "rename":
-                    string oldName;
-                    string newName;
-                    CutBetweenTo(newArg, out oldName, out newName);
-                    focused[oldName].Rename(newName);
-                    break;
-                default:
-                    Console.WriteLine($"argument {CommandType} invalid");
-                    break;
-            }
-        }
+            public KeyPaths(string CommandType, Delegate action) :
+                this(CommandType, action, (KeyPaths[])null) { }
 
-        private static CobilasPackage DeserializeCobilasPackage(string path) {
-            BinaryFormatter formatter = new BinaryFormatter();
-            CobilasPackage res = null;
-            using (FileStream stream = File.OpenRead(path))
-                res = (CobilasPackage)formatter.Deserialize(stream);
-            return res;
-        }
+            public KeyPaths(string CommandType, KeyPaths[] cellars) :
+                this(CommandType, (Delegate)null, cellars) { }
 
-        private static void SerializeCobilasPackage(CobilasPackage package, string path) {
-            BinaryFormatter formatter = new BinaryFormatter();
-            using (FileStream stream = File.Create(path))
-                formatter.Serialize(stream, package);
-        }
+            public KeyPaths(string CommandType) :
+                this(CommandType, (Delegate)null) { }
 
-        private static void CmdPackCommand(string arg) {
-            string CommandType;
-            string newArg;
-            int res;
-            GetCommandType(arg, out CommandType, out newArg);
-            switch (CommandType) {
-                case "init":
-                    if (!ConteinsPack(newArg))
-                        packs.Add(new CobilasPackage(newArg));
-                    else Console.WriteLine($"Pack {newArg} exist!");
-                    break;
-                case "in":
-                    packs.Add(DeserializeCobilasPackage(newArg));
-                    break;
-                case "out":
-                    string packName;
-                    string pathFilePack;
-                    CutBetweenTo(newArg, out packName, out pathFilePack);
-                    SerializeCobilasPackage(packs[IndexOfPack(packName)] , pathFilePack);
-                    break;
-                case "focused":
-                    if (int.TryParse(newArg, out res)) {
-                        if (res > -1 && res < packs.Count) {
-                            focused = packs[res];
-                            focusedIndex = res;
-                        } else
-                            Console.WriteLine($"item at index {res} does not exist!");
-                    } else {
-                        if (ConteinsPack(newArg)) {
-                            focusedIndex = IndexOfPack(newArg);
-                            focused = packs[focusedIndex];
-                        } else
-                            Console.WriteLine($"item {newArg} does not exist!");
-                    }
-                    break;
-                case "showPacks":
-                    for (int I = 0; I < packs.Count; I++)
-                        Console.WriteLine("pack N[{0}] name:{1}", I, packs[I].Name);
-                    break;
-                case "showFocusedItem":
-                    Console.WriteLine($"Item: {focused.Name}");
-                    Console.WriteLine($"Index item: {focusedIndex}");
-                    break;
-                case "rename":
-                    string oldName;
-                    string newName;
-                    CutBetweenTo(newArg, out oldName, out newName);
-                    packs[IndexOfPack(oldName)].Rename(newName);
-                    break;
-                case "delete":
-                    if (int.TryParse(newArg, out res)) {
-                        if (res > -1 && res < packs.Count)
-                            packs.RemoveAt(res);
-                        else
-                            Console.WriteLine($"item at index {res} does not exist!");
-                    } else {
-                        if (ConteinsPack(newArg))
-                            packs.RemoveAt(IndexOfPack(newArg));
-                        else
-                            Console.WriteLine($"item {newArg} does not exist!");
-                    }
-                    break;
-                default:
-                    Console.WriteLine($"{CommandType} invalid command type");
-                    break;
+            public bool HasAction()
+                => action != null;
+
+            public bool IsKey(string CommandType) {
+                foreach (var item in this.CommandType.Split(new char[] { '/' }, StringSplitOptions.RemoveEmptyEntries))
+                    if (item == CommandType)
+                        return true;
+                return false;
             }
         }
     }

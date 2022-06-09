@@ -1,8 +1,5 @@
 ﻿using System;
-using System.IO;
-using System.Globalization;
 using System.Collections.Generic;
-using System.Runtime.Serialization.Formatters.Binary;
 
 namespace Cobilas.IO.CobilasPackage.CLI {
 

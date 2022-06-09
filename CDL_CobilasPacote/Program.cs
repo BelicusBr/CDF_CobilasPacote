@@ -49,7 +49,7 @@ namespace Cobilas.IO.CobilasPackage.CLI {
 
         static void Main(string[] args) {
 
-            Console.Title = "CLI cobila packages";
+            Console.Title = "CLI cobila packages (version:0.1.6)";
             Console.Write("Date {0} ", DateTime.Today.ToShortDateString());
             Console.Write("Time {0}\n", DateTime.Now.ToLongTimeString());
             Console.WriteLine("help");

@@ -3,32 +3,25 @@ using System.Globalization;
 
 namespace Cobilas.IO.CobilasPackage.CLI {
     /*
-     * help/ajuda
-     * exit/sair
-     * clear/limpar
-     * cmd
-     * cmd init
-     * cmd init pack : {nome do pack}
-     * cmd init entry : {caminho do arquivo} : {caminho relativo}
-     * cmd focus
-     * cmd focus pack : {nome do pack}/{indice}
-     * cmd show
-     * cmd show pack
-     * cmd show packs
-     * cmd show entries
-     * cmd delete
-     * cmd delete pack : {nome do pack}/{indice}
-     * cmd delete entry : {caminho relativo}/{indice}
-     * cmd rename
-     * cmd rename pack : {nome do pack} : {novo nome do pack}
-     * cmd rename entry : {caminho relativo} : {novo caminho relativo}
-     * cmd in
-     * cmd in pack : {caminho do arquivo pack}
-     * cmd in entry changeContent : {caminho do arquivo} : {caminho relativo}
-     * cmd out
-     * cmd out pack : {nome do pack} : {caminho do arquivo pack}
-     * cmd out entry : {caminho relativo} : {caminho do diretório de saida}
-     * cmd out info : {caminho do arquivo de saida}
+     * help/ajuda => mostra uma lista de comandos
+     * exit/sair => sair do cmd
+     * clear/limpar => limpar a tela do cmd
+     * cmd => inicializa uma linha de comando
+     * cmd init pack : {nome do pack} => inicia um novo pacote
+     * cmd init entry : {caminho do arquivo} : {caminho relativo} => inicia uma nova entrada
+     * cmd focus pack : {nome do pack}/{indice} => foca no pacote para ser manipulado
+     * cmd show pack => mostra o pacote que está focado
+     * cmd show packs => mostra os pacotes que estão registrados
+     * cmd show entries => mostra as entradas que estão alocadas no pacote que está focado
+     * cmd delete pack : {nome do pack}/{indice} => deletar o pacote
+     * cmd delete entry : {caminho relativo}/{indice} => deleta a entrada do pacote que está focado
+     * cmd rename pack : {nome do pack} : {novo nome do pack} => renomeá um pacote
+     * cmd rename entry : {caminho do arquivo} : {caminho relativo} => renomeá uma entrada do pacote que está focado
+     * cmd in pack : {caminho do arquivo pack} => deserializa um arquivo de pacote
+     * cmd in entry changeContent : {caminho do arquivo} : {caminho relativo} => modifica o conteudo da entrada de um pacote que está focado
+     * cmd out pack : {nome do pack} : {caminho do arquivo pack} => serializa um pacote num arquivo de pacote
+     * cmd out entry : {caminho relativo} : {caminho do diretório de saída} => serializa a entrada num diretório especificado
+     * cmd out info : {caminho do arquivo de saída} => gera uma saida com informações em .xml
      */
     internal struct root_help {
 

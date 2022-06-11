@@ -34,6 +34,13 @@ namespace Cobilas.IO.CobilasPackage.CLI {
         public bool HasAction()
             => action != null;
 
+        public bool Contains(string CommandType) {
+            foreach (var item in cellars)
+                if (item.IsKey(CommandType))
+                    return true;
+            return false;
+        }
+
         public bool IsKey(string CommandType) {
             foreach (var item in this.CommandType.Split(new char[] { '/' }, StringSplitOptions.RemoveEmptyEntries))
                 if (item == CommandType)

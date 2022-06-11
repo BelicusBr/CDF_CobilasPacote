@@ -19,15 +19,23 @@ namespace Cobilas.IO.CobilasPackage.CLI {
         private static void cmd_in_file_changeContent(string arg) {
             try {
                 if (Program.focused == null) {
-                    Console.WriteLine("no focused pack");
+                    cmd_Debug.NoFocusedPack();
                     return;
                 }
                 string[] itens = arg.Split(':');
                 if (Program.focused.Contains(itens[1].Trim()))
                     Program.focused[itens[1].Trim()].ChangeContent(File.ReadAllBytes(itens[0].Trim()));
-                else Console.WriteLine($"entry {itens[1].Trim()} does not exist!");
+                else {
+                    cmd_Debug.EntryDoesNotExist(itens[1].Trim());
+                    //cmd_Debug.MsmSysLine(cmd_Debug.IsPT_BR ?
+                    //    new string[] { $"A entrada ", $"@{itens[1].Trim()}", " não existe!" } :
+                    //    new string[] { $"entry ", $"@{itens[1].Trim()}", " does not exist!" });
+                }
             } catch {
-                Console.WriteLine($"argument [{arg}] is invalid!");
+                cmd_Debug.ArgumentInvalid(arg);
+                //cmd_Debug.MsmArgError(cmd_Debug.IsPT_BR ?
+                //    new string[] { $"O argumento ", $"@[{arg}]", " é inválido!" } :
+                //    new string[] { $"argument ", $"@[{arg}]", " is invalid!" });
             }
         }
     }

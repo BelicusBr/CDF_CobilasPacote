@@ -43,6 +43,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Aux class\cmd_Debug_InPut.cs" />
+    <Compile Include="CDLs\cmd_Debug.cs" />
     <Compile Include="CDLs\cmd_delete.cs" />
     <Compile Include="CDLs\cmd_focus.cs" />
     <Compile Include="CDLs\cmd_in.cs" />
@@ -51,8 +53,8 @@
     <Compile Include="CDLs\cmd_rename.cs" />
     <Compile Include="CDLs\cmd_show.cs" />
     <Compile Include="CDLs\root_help.cs" />
-    <Compile Include="CommandOutput.cs" />
-    <Compile Include="KeyPaths.cs" />
+    <Compile Include="Aux class\CommandOutput.cs" />
+    <Compile Include="Aux class\KeyPaths.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

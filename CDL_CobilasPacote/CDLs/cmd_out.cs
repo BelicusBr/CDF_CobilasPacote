@@ -39,9 +39,9 @@ namespace Cobilas.IO.CobilasPackage.CLI {
                     stream.Write(cont, 0, cont.Length);
                 }
             } catch (Exception e) {
-                Console.WriteLine("there was a failure to print the information");
+                cmd_Debug.MsmError("there was a failure to print the information");
                 Console.WriteLine();
-                Console.WriteLine(e);
+                cmd_Debug.MsmError(e.ToString());
             }
         }
 
@@ -52,16 +52,19 @@ namespace Cobilas.IO.CobilasPackage.CLI {
                     BinaryFormatter formatter = new BinaryFormatter();
                     using (FileStream stream = File.Create(itens[1].Trim()))
                         formatter.Serialize(stream, Program.packs[Program.IndexOfPack(itens[0].Trim())]);
-                } else Console.WriteLine($"package {itens[0].Trim()} does not exist!");
+                } else cmd_Debug.PackDoesNotExist(itens[0].Trim());
+                    //cmd_Debug.MsmSysLine($"package ", $"@{itens[0].Trim()}", " does not exist!");
             } catch {
-                Console.WriteLine($"argument [{arg}] is invalid!");
+                cmd_Debug.ArgumentInvalid(arg);
+                //cmd_Debug.MsmArgError($"argument ", $"@[{arg}]", " is invalid!");
             }
         }
 
         private static void root_cmd_out_entry(string arg) {
             try {
                 if (Program.focused == null) {
-                    Console.WriteLine("no focused pack");
+                    cmd_Debug.NoFocusedPack();
+                    //cmd_Debug.MsmSysLine("no focused pack");
                     return;
                 }
                 string[] itens = arg.Split(':');
@@ -70,9 +73,11 @@ namespace Cobilas.IO.CobilasPackage.CLI {
                         ItemFile fileTemp = Program.focused[itens[0].Trim()];
                         stream.Write(fileTemp.Content, 0, fileTemp.Count);
                     }
-                } else Console.WriteLine($"entry {itens[0].Trim()} does not exist!");
+                } else cmd_Debug.EntryDoesNotExist(arg.Trim());
+                    //cmd_Debug.MsmSysLine($"entry ", $"@{itens[0].Trim()}", " does not exist!");
             } catch {
-                Console.WriteLine($"argument [{arg}] is invalid!");
+                cmd_Debug.ArgumentInvalid(arg);
+                //cmd_Debug.MsmArgError($"argument ", $"@[{arg}]", " is invalid!");
             }
         }
     }

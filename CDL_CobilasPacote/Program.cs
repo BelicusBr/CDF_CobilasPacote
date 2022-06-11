@@ -2,7 +2,8 @@
 using System.Collections.Generic;
 
 namespace Cobilas.IO.CobilasPackage.CLI {
-
+    // #* => show info pack or entry
+    // #@ => show debug system
     internal class Program {
         private static bool exit = false;
         internal static List<CobilasPackage> packs = new List<CobilasPackage>();
@@ -11,7 +12,7 @@ namespace Cobilas.IO.CobilasPackage.CLI {
         private static KeyPaths RootCommand = new KeyPaths("Root", new KeyPaths[] {
             new KeyPaths("help/ajuda", root_help.f_root_help),
             new KeyPaths("exit/sair", new Action(() => { exit = true; })),
-            new KeyPaths("clear/limpar", (Action)Console.Clear),
+            new KeyPaths("clear/limpar", (Action)Clear),
             new KeyPaths("cmd", new KeyPaths[] {
                 new KeyPaths("init", new KeyPaths[] {
                     new KeyPaths("pack", cmd_init.f_root_cmd_init_pack),
@@ -48,33 +49,48 @@ namespace Cobilas.IO.CobilasPackage.CLI {
         });
 
         static void Main(string[] args) {
+            bool sfxPortableConfirm = false;
+            Console.Title = "CLI cobila packages (version:0.1.20)";
+            cmd_Debug.MsmDateTime();
+            cmd_Debug.MsmTipHelp();
 
-            Console.Title = "CLI cobila packages (version:0.1.6)";
-            Console.Write("Date {0} ", DateTime.Today.ToShortDateString());
-            Console.Write("Time {0}\n", DateTime.Now.ToLongTimeString());
-            Console.WriteLine("help");
+            try {
+                if (args.Length != 0)
+                    foreach (var item in args) {
+                        if (!sfxPortableConfirm)
+                            if (item.Contains("<")) {
+                                cmd_Debug.MsmSysLine("Portable sfx file");
+                                sfxPortableConfirm = true;
+                            }
+                        Console.WriteLine(item);
+                        CommandLineRunner(CommandLineInterpreter(item.Trim('<', '>')));
+                    }
 
-            try
-            {
-
-            if (args.Length != 0)
-                foreach (var item in args)
-                    CommandLineRunner(CommandLineInterpreter(item));
-
-            while (!exit && args.Length == 0)
-                CommandLineRunner(CommandLineInterpreter(Console.ReadLine()));
-            }
-            catch (Exception e)
-            {
-
-                Console.WriteLine(e);
+                while (!exit && args.Length == 0)
+                    CommandLineRunner(CommandLineInterpreter(Console.ReadLine()));
+            } catch (Exception e) {
+                cmd_Debug.MsmError(e.ToString());
                 Console.ReadLine();
             }
+        }
+
+        private static void Clear() {
+            Console.Clear();
+            cmd_Debug.MsmDateTime();
+            cmd_Debug.MsmTipHelp();
         }
 
         private static void CommandLineRunner(List<CommandOutput> args) {
             KeyPaths temp = RootCommand;
             for (int I = 0; I < args.Count; I++) {
+                if (!temp.Contains(args[I].Command)) {
+                    cmd_Debug.MsmSysLine(
+                        cmd_Debug.IsPT_BR ?
+                        new string[] { "O comando ", $"@{args[I].Command}", " é inválido!" } :
+                        new string[] { "Command ", $"@{args[I].Command}", " is invalid!" }
+                        );
+                    break;
+                }
                 temp = temp[args[I].Command];
                 if (args[I].FinalCommand) {
                     if (args[I].IsOutput) temp.action.DynamicInvoke(args[I].Output);
@@ -85,21 +101,28 @@ namespace Cobilas.IO.CobilasPackage.CLI {
 
         private static List<CommandOutput> CommandLineInterpreter(string arg) {
             List<CommandOutput> res = new List<CommandOutput>();
-            string[] comm;
-            string cml;
-            string _value;
-            Split(arg, out cml, out _value);
-            comm = cml.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+            try {
+                string[] comm;
+                string cml;
+                string _value;
+                Split(arg, out cml, out _value);
+                comm = cml.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
 
-            for (int I = 0; I < comm.Length; I++)
-                res.Add(new CommandOutput(comm[I].Trim()));
+                for (int I = 0; I < comm.Length; I++)
+                    res.Add(new CommandOutput(comm[I].Trim()));
 
-            CommandOutput jut = res[res.Count - 1];
-            jut.FinalCommand = true;
-            jut.IsOutput = _value != null;
-            jut.Output = _value != null ? _value : null;
-            res[res.Count - 1] = jut;
+                CommandOutput jut = res[res.Count - 1];
+                jut.FinalCommand = true;
+                jut.IsOutput = _value != null;
+                jut.Output = _value != null ? _value : null;
+                res[res.Count - 1] = jut;
+            } catch (Exception e) {
+                if (string.IsNullOrEmpty(arg))
+                    cmd_Debug.MsmSysLine("empty argument is not valid!");
+                else cmd_Debug.MsmArgError("argument ", $"@[{arg}]", " is not valid!");
 
+                cmd_Debug.MsmError(e.ToString());
+            }
             return res;
         }
 

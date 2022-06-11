@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Globalization;
 
 namespace Cobilas.IO.CobilasPackage.CLI {
     /*
@@ -28,16 +27,8 @@ namespace Cobilas.IO.CobilasPackage.CLI {
         internal static Action f_root_help => m_root_help;
 
         private static void m_root_help() {
-            switch (CultureInfo.CurrentCulture.Name) {
-                case "pt-BR":
-                    root_help_pt_BR();
-                    break;
-                case "en-US":
-                    root_help_en_US();
-                    break;
-                default:
-                    break;
-            }
+            if(cmd_Debug.IsPT_BR) root_help_pt_BR();
+            else root_help_en_US();
         }
 
         private static void root_help_pt_BR() {
@@ -101,60 +92,67 @@ namespace Cobilas.IO.CobilasPackage.CLI {
         }
 
         private static void HelpWriteLine(string CommandType, string msm) {
-            PrintCommandType(CommandType);
-            PrintMessage(msm);
-            BreakLine();
+            cmd_Debug.Msm(
+                new cmd_Debug_InPut(ConsoleColor.DarkCyan, "#@ "),
+                new cmd_Debug_InPut(ConsoleColor.DarkGreen, CommandType),
+                new cmd_Debug_InPut(" => "),
+                new cmd_Debug_InPut(ConsoleColor.DarkGray, msm),
+                new cmd_Debug_InPut('\n')
+                );
             Console.ResetColor();
         }
 
         private static void PrintHelpCommandLine_or(string CommandType, string cliv1, string cliv2, string msm) {
-            PrintCommandType(CommandType);
-            PrintValue(cliv1, false);
-            PrintValue(cliv2, true);
-            PrintMessage(msm);
-            BreakLine();
+            cmd_Debug.Msm(
+                new cmd_Debug_InPut(ConsoleColor.DarkCyan, "#@ "),
+                new cmd_Debug_InPut(ConsoleColor.DarkGreen, CommandType),
+                new cmd_Debug_InPut(ConsoleColor.DarkRed, " : "),
+                new cmd_Debug_InPut(ConsoleColor.DarkGray, "{"),
+                new cmd_Debug_InPut(cliv1),
+                new cmd_Debug_InPut(ConsoleColor.DarkGray, "}"),
+                new cmd_Debug_InPut(ConsoleColor.DarkRed, "/"),
+                new cmd_Debug_InPut(ConsoleColor.DarkGray, "{"),
+                new cmd_Debug_InPut(cliv2),
+                new cmd_Debug_InPut(ConsoleColor.DarkGray, "}"),
+                new cmd_Debug_InPut(" => "),
+                new cmd_Debug_InPut(ConsoleColor.DarkGray, msm),
+                new cmd_Debug_InPut('\n')
+                );
             Console.ResetColor();
         }
 
         private static void PrintHelpCommandLine_and(string CommandType, string cliv1, string cliv2, string msm) {
-            PrintCommandType(CommandType);
-            PrintValue(cliv1, false);
-            PrintValue(cliv2, false);
-            PrintMessage(msm);
-            BreakLine();
+            cmd_Debug.Msm(
+                new cmd_Debug_InPut(ConsoleColor.DarkCyan, "#@ "),
+                new cmd_Debug_InPut(ConsoleColor.DarkGreen, CommandType),
+                new cmd_Debug_InPut(ConsoleColor.DarkRed, " : "),
+                new cmd_Debug_InPut(ConsoleColor.DarkGray, "{"),
+                new cmd_Debug_InPut(cliv1),
+                new cmd_Debug_InPut(ConsoleColor.DarkGray, "}"),
+                new cmd_Debug_InPut(ConsoleColor.DarkRed, " : "),
+                new cmd_Debug_InPut(ConsoleColor.DarkGray, "{"),
+                new cmd_Debug_InPut(cliv2),
+                new cmd_Debug_InPut(ConsoleColor.DarkGray, "}"),
+                new cmd_Debug_InPut(" => "),
+                new cmd_Debug_InPut(ConsoleColor.DarkGray, msm),
+                new cmd_Debug_InPut('\n')
+                );
             Console.ResetColor();
         }
 
         private static void PrintHelpCommandLine(string CommandType, string cliv, string msm) {
-            PrintCommandType(CommandType);
-            PrintValue(cliv, false);
-            PrintMessage(msm);
-            BreakLine();
+            cmd_Debug.Msm(
+                new cmd_Debug_InPut(ConsoleColor.DarkCyan, "#@ "),
+                new cmd_Debug_InPut(ConsoleColor.DarkGreen, CommandType),
+                new cmd_Debug_InPut(ConsoleColor.DarkRed, " : "),
+                new cmd_Debug_InPut(ConsoleColor.DarkGray, "{"),
+                new cmd_Debug_InPut(cliv),
+                new cmd_Debug_InPut(ConsoleColor.DarkGray, "}"),
+                new cmd_Debug_InPut(" => "),
+                new cmd_Debug_InPut(ConsoleColor.DarkGray, msm),
+                new cmd_Debug_InPut('\n')
+                );
             Console.ResetColor();
         }
-
-        private static void PrintCommandType(string CommandType) {
-            Console.ForegroundColor = ConsoleColor.DarkGreen;
-            Console.Write(CommandType);
-        }
-
-        private static void PrintMessage(string msm) {
-            Console.ForegroundColor = ConsoleColor.Gray;
-            Console.Write(" => ");
-            Console.ForegroundColor = ConsoleColor.DarkGray;
-            Console.Write(msm);
-        }
-
-        private static void PrintValue(string msm, bool signOr) {
-            Console.ForegroundColor = ConsoleColor.Red;
-            if (signOr) Console.Write('/');
-            else Console.Write(" : ");
-
-            Console.ForegroundColor = ConsoleColor.Gray;
-            Console.Write("{{{0}}}", msm);
-        }
-
-        private static void BreakLine() 
-            => Console.Write('\n');
     }
 }

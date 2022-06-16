@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 
 namespace Cobilas.IO.CobilasPackage.CLI {
+
     // #* => show info pack or entry
     // #@ => show debug system
     internal class Program {

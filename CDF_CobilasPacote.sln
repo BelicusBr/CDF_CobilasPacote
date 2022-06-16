@@ -6,6 +6,9 @@ MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CDF_CobilasPacote", "CDF_CobilasPacote\CDF_CobilasPacote.csproj", "{1B9D023A-0D94-474A-98DC-4CD378CD2847}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CDL_CobilasPacote", "CDL_CobilasPacote\CDL_CobilasPacote.csproj", "{61CEC13C-3059-4EE3-9C9B-EBCC1718EA59}"
+	ProjectSection(ProjectDependencies) = postProject
+		{1B9D023A-0D94-474A-98DC-4CD378CD2847} = {1B9D023A-0D94-474A-98DC-4CD378CD2847}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

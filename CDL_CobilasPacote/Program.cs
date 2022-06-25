@@ -48,15 +48,16 @@ namespace Cobilas.IO.CobilasPackage.CLI {
                 })
             })
         });
-
+        //external commands
         static void Main(string[] args) {
             bool sfxPortableConfirm = false;
-            Console.Title = "CLI cobila packages (version:0.1.20)";
+            Console.Title = "CLI cobila packages (version:0.1.32)";
             cmd_Debug.MsmDateTime();
             cmd_Debug.MsmTipHelp();
 
             try {
-                if (args.Length != 0)
+                if (args.Length != 0) {
+                    cmd_Debug.MsmSysLine("External commands");
                     foreach (var item in args) {
                         if (!sfxPortableConfirm)
                             if (item.Contains("<")) {
@@ -66,12 +67,17 @@ namespace Cobilas.IO.CobilasPackage.CLI {
                         Console.WriteLine(item);
                         CommandLineRunner(CommandLineInterpreter(item.Trim('<', '>')));
                     }
+                } else cmd_Debug.MsmSysLine("Internal commands");
 
-                while (!exit && args.Length == 0)
-                    CommandLineRunner(CommandLineInterpreter(Console.ReadLine()));
+                while (!exit && args.Length == 0) {
+                    string line = Console.ReadLine();
+                    if (string.IsNullOrEmpty(line))
+                        cmd_Debug.MsmSysLine($"empty argument is not valid!");
+                    else CommandLineRunner(CommandLineInterpreter(line));
+                }
             } catch (Exception e) {
                 cmd_Debug.MsmError(e.ToString());
-                Console.ReadLine();
+                _ = Console.ReadLine();
             }
         }
 
